@@ -19,7 +19,7 @@ import (
 	cmtflags "github.com/cometbft/cometbft/libs/cli/flags"
 	cmtlog "github.com/cometbft/cometbft/libs/log"
 	nm "github.com/cometbft/cometbft/node"
-	"github.com/cometbft/cometbft/p2p"
+	"github.com/cometbft/cometbft/p2p/nodekey"
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 )
@@ -44,7 +44,7 @@ func main() {
 		log.Fatalf("failed to read config: %v", err)
 	}
 
-	logger := cmtlog.NewTMLogger(cmtlog.NewSyncWriter(os.Stdout))
+	logger := cmtlog.NewLogger(os.Stdout)
 	logger, err := cmtflags.ParseLogLevel(config.LogLevel, logger, cfg.DefaultLogLevel)
 	if err != nil {
 		panic(fmt.Errorf("failed to parse log level: %w", err))
@@ -57,7 +57,7 @@ func main() {
 		panic(fmt.Errorf("failed to create Forum Application: %w", err))
 	}
 
-	nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
+	nodeKey, err := nodekey.Load(config.NodeKeyFile())
 	if err != nil {
 		panic(fmt.Errorf("failed to load node key: %w", err))
 	}

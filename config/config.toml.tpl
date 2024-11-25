@@ -44,8 +44,11 @@ db_dir = "{{ js .BaseConfig.DBPath }}"
 # Output level for logging, including package level options
 log_level = "{{ .BaseConfig.LogLevel }}"
 
-# Output format: 'plain' (colored text) or 'json'
+# Output format: 'plain' or 'json'
 log_format = "{{ .BaseConfig.LogFormat }}"
+
+# Colored log output when 'log_format' is 'plain'. Default is 'true'.
+log_colors = {{ .BaseConfig.LogColors }}
 
 ##### additional base config options #####
 
@@ -405,8 +408,9 @@ trust_height = {{ .StateSync.TrustHeight }}
 trust_hash = "{{ .StateSync.TrustHash }}"
 trust_period = "{{ .StateSync.TrustPeriod }}"
 
-# Time to spend discovering snapshots before initiating a restore.
-discovery_time = "{{ .StateSync.DiscoveryTime }}"
+# Time to spend discovering snapshots before switching to blocksync. If set to
+# 0, state sync will be trying indefinitely.
+max_discovery_time = "{{ .StateSync.MaxDiscoveryTime }}"
 
 # Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
 # Will create a new, randomly named directory within, and remove it when done.

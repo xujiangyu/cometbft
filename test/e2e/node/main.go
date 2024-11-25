@@ -24,7 +24,7 @@ import (
 	lrpc "github.com/cometbft/cometbft/light/rpc"
 	dbs "github.com/cometbft/cometbft/light/store/db"
 	"github.com/cometbft/cometbft/node"
-	"github.com/cometbft/cometbft/p2p"
+	"github.com/cometbft/cometbft/p2p/nodekey"
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	rpcserver "github.com/cometbft/cometbft/rpc/jsonrpc/server"
@@ -32,7 +32,7 @@ import (
 	e2e "github.com/cometbft/cometbft/test/e2e/pkg"
 )
 
-var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+var logger = log.NewLogger(os.Stdout)
 
 // main is the binary entrypoint.
 func main() {
@@ -240,7 +240,7 @@ func startSigner(cfg *Config) error {
 	return nil
 }
 
-func setupNode() (*config.Config, log.Logger, *p2p.NodeKey, error) {
+func setupNode() (*config.Config, log.Logger, *nodekey.NodeKey, error) {
 	var cmtcfg *config.Config
 
 	home := os.Getenv("CMTHOME")
@@ -268,7 +268,9 @@ func setupNode() (*config.Config, log.Logger, *p2p.NodeKey, error) {
 	}
 
 	if cmtcfg.LogFormat == config.LogFormatJSON {
-		logger = log.NewTMJSONLogger(log.NewSyncWriter(os.Stdout))
+		logger = log.NewJSONLogger(os.Stdout)
+	} else if !cmtcfg.LogColors {
+		logger = log.NewLoggerWithColor(os.Stdout, false)
 	}
 
 	nodeLogger, err := cmtflags.ParseLogLevel(cmtcfg.LogLevel, logger, config.DefaultLogLevel)
@@ -276,9 +278,7 @@ func setupNode() (*config.Config, log.Logger, *p2p.NodeKey, error) {
 		return nil, nil, nil, err
 	}
 
-	nodeLogger = nodeLogger.With("module", "main")
-
-	nodeKey, err := p2p.LoadOrGenNodeKey(cmtcfg.NodeKeyFile())
+	nodeKey, err := nodekey.LoadOrGen(cmtcfg.NodeKeyFile())
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to load or gen node key %s: %w", cmtcfg.NodeKeyFile(), err)
 	}

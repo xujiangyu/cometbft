@@ -252,8 +252,11 @@ type BaseConfig struct {
 	// Output level for logging
 	LogLevel string `mapstructure:"log_level"`
 
-	// Output format: 'plain' (colored text) or 'json'
+	// Output format: 'plain' or 'json'
 	LogFormat string `mapstructure:"log_format"`
+
+	// Colored log output. Considered only when `log_format = plain`.
+	LogColors bool `mapstructure:"log_colors"`
 
 	// Path to the JSON file containing the initial validator set and other meta data
 	Genesis string `mapstructure:"genesis_file"`
@@ -292,6 +295,7 @@ func DefaultBaseConfig() BaseConfig {
 		ABCI:               "socket",
 		LogLevel:           DefaultLogLevel,
 		LogFormat:          LogFormatPlain,
+		LogColors:          true,
 		FilterPeers:        false,
 		DBBackend:          "pebbledb",
 		DBPath:             DefaultDataDir,
@@ -1069,7 +1073,7 @@ type StateSyncConfig struct {
 	TrustPeriod         time.Duration `mapstructure:"trust_period"`
 	TrustHeight         int64         `mapstructure:"trust_height"`
 	TrustHash           string        `mapstructure:"trust_hash"`
-	DiscoveryTime       time.Duration `mapstructure:"discovery_time"`
+	MaxDiscoveryTime    time.Duration `mapstructure:"max_discovery_time"`
 	ChunkRequestTimeout time.Duration `mapstructure:"chunk_request_timeout"`
 	ChunkFetchers       int32         `mapstructure:"chunk_fetchers"`
 }
@@ -1087,7 +1091,7 @@ func (cfg *StateSyncConfig) TrustHashBytes() []byte {
 func DefaultStateSyncConfig() *StateSyncConfig {
 	return &StateSyncConfig{
 		TrustPeriod:         168 * time.Hour,
-		DiscoveryTime:       15 * time.Second,
+		MaxDiscoveryTime:    2 * time.Minute,
 		ChunkRequestTimeout: 10 * time.Second,
 		ChunkFetchers:       4,
 	}
@@ -1115,8 +1119,8 @@ func (cfg *StateSyncConfig) ValidateBasic() error {
 			}
 		}
 
-		if cfg.DiscoveryTime != 0 && cfg.DiscoveryTime < 5*time.Second {
-			return ErrInsufficientDiscoveryTime
+		if cfg.MaxDiscoveryTime < 0 {
+			return cmterrors.ErrNegativeField{Field: "max_discovery_time"}
 		}
 
 		if cfg.TrustPeriod <= 0 {
@@ -1230,7 +1234,7 @@ func DefaultConsensusConfig() *ConsensusConfig {
 		TimeoutProposeDelta:              500 * time.Millisecond,
 		TimeoutVote:                      1000 * time.Millisecond,
 		TimeoutVoteDelta:                 500 * time.Millisecond,
-		TimeoutCommit:                    1000 * time.Millisecond,
+		TimeoutCommit:                    0 * time.Millisecond,
 		CreateEmptyBlocks:                true,
 		CreateEmptyBlocksInterval:        0 * time.Second,
 		PeerGossipSleepDuration:          100 * time.Millisecond,
